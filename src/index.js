@@ -2,14 +2,20 @@ const holes = document.querySelectorAll('.hole');
 const moles = document.querySelectorAll('.mole');
 const startButton = document.querySelector('#start');
 // TODO: Add the missing query selectors:
-const score = document.querySelector('#score');; // Use querySelector() to get the score element
-const timerDisplay = document.querySelector('#timer');; // use querySelector() to get the timer element.
+const score = document.querySelector('#score'); // Use querySelector() to get the score element
+const timerDisplay = document.querySelector('#timer'); // use querySelector() to get the timer element.
 
 let time = 0;
 let timer;
 let lastHole = 0;
 let points = 0;
 let difficulty = "hard";
+let sButton;
+let sButtonHTML;
+
+let origOuterHTML = [];
+
+//setEventListeners();
 
 /**
  * Generates a random integer within a range.
@@ -44,9 +50,12 @@ function setDelay(difficulty) {
   let result = 1000;
   // user specifies 'easy' or 'hard'
   if (difficulty == "easy") {
+    // easy mode constant 1500
     result = 1500;
   } else if (difficulty=="hard"){
-    result = Math.floor(Math.random() * (1200 - 600 + 1));
+    //hard mode returns value between 600 and 1200 - "random*601" yeilds value of 0-600, adding 
+    // 600 returns 600 - 1200
+    result = Math.floor(Math.random() * (601)+600);
   }
 
   return result;
@@ -68,20 +77,22 @@ function setDelay(difficulty) {
  * chooseHole(holes) //> returns one of the 9 holes that you defined
  */
 function chooseHole(holes) {
-  // TODO: Write your code here.
-
+  
   // fetch holes from document
   const holeNodeList = document.querySelectorAll('.hole');
+  
+  let selectedHole = lastHole;  // forces at least one pass of the while loop
 
-  let selectedHole = lastHole;
-  while (selectedHole == lastHole){
-    selectedHole = Math.floor(Math.random() * 9);
-  }
-
+  //console.log("in chooseHole, last hole is "+lastHole);
+  while (selectedHole == lastHole){   // keep choosing until next hole is  different than the last one
+    selectedHole = Math.floor(Math.random() * 9);  // choses next hole
+    }
+  // having determined which hole to play next, get it from the node list
   const result = holeNodeList[selectedHole];
+  // remember the hole just selected
   lastHole = selectedHole;
 
-  return
+  return result;
 
 
 }
@@ -98,23 +109,18 @@ function chooseHole(holes) {
 * return the timeoutId if the game continues or the string "game stopped"
 * if the game is over.
 *
-*  // if time > 0:
-*  //   timeoutId = showUp()
-*  //   return timeoutId
-*  // else
-*  //   gameStopped = stopGame()
-*  //   return gameStopped
-*
+
 */
 function gameOver() {
-  // TODO: Write your code here
-  if (time > 0) {
-    timeoutId=showUp();
+ // if time remaining display another critter 
+    if (time > 0) {
+    timeoutID = showUp();
     return timeoutID;
   }
+  // time has elapsed, shut down
   else {
     gameStopped = stopGame();
-    return gameStopped;
+    return "game stopped";
   }
   
 }
@@ -129,8 +135,9 @@ function gameOver() {
 *
 */
 function showUp() {
-  let delay = 0; // TODO: Update so that it uses setDelay()
-  const hole = 0;  // TODO: Update so that it use chooseHole()
+  // run showAndHide function (which displays critter and allows for a whack attempt)
+  // parameters are the chooseHole function (which determines which hole for this attempt)
+  // and the setDelay function (which determines how long the critter is displayed)
   return showAndHide(chooseHole(holes), setDelay(difficulty));
 }
 
@@ -143,16 +150,19 @@ function showUp() {
 *
 */
 function showAndHide(hole, delay){
-  // TODO: call the toggleVisibility function so that it adds the 'show' class.
+  // call the toggleVisibility function so that it adds the 'show' class.
   toggleVisibility(hole);
   
-  const timeoutID = setTimeout(() => {
-    // TODO: call the toggleVisibility function so that it removes the 'show' class when the timer times out.
+  const timeoutID = 
+    setTimeout(() => {
+    // call the toggleVisibility function so that it removes the 'show' class when the timer times out.
     toggleVisibility(hole);
     
     gameOver();
-  }, delay); // TODO: change the setTimeout delay to the one provided as a parameter
+  }, delay); //  delay is set to the one provided as a parameter
+  
   return timeoutID;
+  
 }
 
 /**
@@ -162,7 +172,7 @@ function showAndHide(hole, delay){
 *
 */
 function toggleVisibility(hole){
-  // TODO: add hole.classList.toggle so that it adds or removes the 'show' class.
+  // hole.classList.toggle so that it adds or removes the 'show' class.
 
   hole.classList.toggle("show");
   
@@ -180,7 +190,10 @@ function toggleVisibility(hole){
 *
 */
 function updateScore() {
-  // TODO: Write your code here
+   // increment score
+  points += 1;
+  // update scoreboard
+  score.textContent = points;
 
   return points;
 }
@@ -193,9 +206,10 @@ function updateScore() {
 *
 */
 function clearScore() {
-  // TODO: Write your code here
-  // points = 0;
-  // score.textContent = points;
+  // reset points score
+  points = 0;
+  // update scoreboard
+  score.textContent = points;
   return points;
 }
 
@@ -205,9 +219,11 @@ function clearScore() {
 *
 */
 function updateTimer() {
-  // TODO: Write your code here.
-  // hint: this code is provided to you in the instructions.
-  
+  // decrement remaining time and display in html element
+  if (time > 0){
+    time -= 1;
+    timerDisplay.textContent = time;
+  }
   return time;
 }
 
@@ -218,8 +234,8 @@ function updateTimer() {
 *
 */
 function startTimer() {
-  // TODO: Write your code here
-  // timer = setInterval(updateTimer, 1000);
+  // create asynch function that calls updateTimer function after 1000ms
+  timer = setInterval(updateTimer, 1000);
   return timer;
 }
 
@@ -233,7 +249,8 @@ function startTimer() {
 */
 function whack(event) {
   // TODO: Write your code here.
-  // call updateScore()
+  // got 'em! add to score
+  updateScore();
   return points;
 }
 
@@ -243,8 +260,13 @@ function whack(event) {
 * for an example on how to set event listeners using a for loop.
 */
 function setEventListeners(){
-  // TODO: Write your code here
-
+  
+  let thisMole=0;
+  while (thisMole<9){
+    moles[thisMole].addEventListener('click', whack)
+    thisMole += 1;
+  }
+  //console.log(moles);
   return moles;
 }
 
@@ -268,6 +290,11 @@ function setDuration(duration) {
 function stopGame(){
   // stopAudio(song);  //optional
   clearInterval(timer);
+
+  //toggle visibility of start button
+  sButton = document.getElementById('start-container');
+  sButton.style.display="block";
+
   return "game stopped";
 }
 
@@ -277,12 +304,22 @@ function stopGame(){
 * is clicked.
 *
 */
+
 function startGame(){
+  // reset scoreboard
+  clearScore();
   setDuration(10);
-  showUp();
+  startTimer();
+  points = 0;
+  setEventListeners();
+  timeoutID = showUp();
+  
+  
   return "game started";
 }
 
+
+// adds event to the start button that makes it trigger start of game
 startButton.addEventListener("click", startGame);
 
 
